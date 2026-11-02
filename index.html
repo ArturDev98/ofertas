@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="color-scheme" content="light dark">
+  <title>Ofertas</title>
+  <link rel="stylesheet" href="estilos.css">
+</head>
+<body>
+  <section id="desbloqueo" class="desbloqueo" hidden>
+    <form id="form-clave" class="caja-clave">
+      <h1 class="titulo-clave"><svg class="icono" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>Ofertas</h1>
+      <p class="ayuda">Los datos están cifrados. Escribe tu clave para verlos.</p>
+      <label for="frase">Clave</label>
+      <input id="frase" type="password" autocomplete="current-password" required>
+      <label class="casilla"><input id="recordar" type="checkbox" checked> Recordar en este navegador</label>
+      <button type="submit" id="abrir">Abrir</button>
+      <p id="error" class="error" role="alert"></p>
+    </form>
+  </section>
+
+  <div id="app" hidden>
+    <header class="barra">
+      <div class="marca-titulo">
+        <h1>Ofertas</h1>
+        <span id="contador" class="contador"></span>
+        <div id="resumen" class="resumen" aria-label="Ofertas visibles por veredicto"></div>
+      </div>
+      <div class="acciones">
+        <button type="button" id="ver-filtros" class="boton solo-movil" aria-expanded="false" aria-controls="filtros">
+          <svg class="icono" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M7 12h10M10 18h4"/></svg>Filtros
+        </button>
+        <button type="button" id="restablecer" class="boton">
+          <svg class="icono" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 5v6h-6"/></svg><span class="texto-largo">Restablecer</span>
+        </button>
+        <button type="button" id="bloquear" class="boton">
+          <svg class="icono" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg><span class="texto-largo">Bloquear</span>
+        </button>
+      </div>
+    </header>
+
+    <div class="cuerpo">
+      <aside id="filtros" class="filtros" aria-label="Filtros">
+        <label class="campo"><span>Buscar</span>
+          <span class="buscador">
+            <svg class="icono" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+            <input id="f-texto" type="search" placeholder="cargo, empresa, stack…">
+          </span>
+        </label>
+        <label class="campo">
+          <span class="fila"><span>Puntaje mínimo</span><output id="f-minimo-valor"></output></span>
+          <input id="f-minimo" type="range" min="0" max="100" step="5">
+        </label>
+        <fieldset><legend>Veredicto</legend><div id="f-veredictos" class="opciones"></div></fieldset>
+        <fieldset><legend>Portal</legend><div id="f-portales" class="opciones"></div></fieldset>
+        <fieldset><legend>Ubicación</legend><div id="f-ubicacion" class="opciones"></div></fieldset>
+        <fieldset><legend>Idioma</legend><div id="f-idioma" class="opciones"></div></fieldset>
+        <label class="campo"><span>Cierra en</span>
+          <select id="f-cierra">
+            <option value="">cualquier fecha</option>
+            <option value="3">3 días o menos</option>
+            <option value="7">7 días o menos</option>
+            <option value="14">14 días o menos</option>
+            <option value="30">30 días o menos</option>
+          </select>
+        </label>
+        <label class="campo"><span>Marca</span>
+          <select id="f-marca">
+            <option value="">todas</option>
+            <option value="interesa">Me interesa</option>
+            <option value="aplique">Apliqué</option>
+            <option value="descartada">Descartadas</option>
+          </select>
+        </label>
+        <label class="casilla"><input id="f-ocultar-descartadas" type="checkbox"> Ocultar descartadas</label>
+        <label class="casilla"><input id="f-ocultar-tracker" type="checkbox"> Ocultar las del tracker</label>
+      </aside>
+
+      <main>
+        <div id="lista" class="lista"></div>
+        <div id="vacio" class="vacio" hidden>
+          <svg class="icono" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+          <p>Ninguna oferta con estos filtros.</p>
+          <button type="button" id="vacio-restablecer" class="boton">Restablecer filtros</button>
+        </div>
+        <p id="generado" class="generado"></p>
+      </main>
+    </div>
+  </div>
+
+  <script src="cripto.js"></script>
+  <script src="logica.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
