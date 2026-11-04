@@ -179,6 +179,11 @@
     visibles.forEach((o) => { porVeredicto[o.rank_verdict] = (porVeredicto[o.rank_verdict] || 0) + 1; });
     $("resumen").replaceChildren(...Object.entries(porVeredicto).map(([v, n]) =>
       el("span", { estilo: { "--c": L.color(v) }, texto: `${n} ${v}` })));
+    const fuera = L.ocultas(todas, filtros, marcas, hoy());
+    const nFuera = fuera.reduce((s, [, n]) => s + n, 0);
+    $("ocultas").hidden = nFuera === 0;
+    $("ocultas-texto").textContent = `${nFuera} oculta${nFuera === 1 ? "" : "s"} por los filtros: ` +
+      fuera.map(([m, n]) => `${n} ${m}`).join(" · ");
     $("vacio").hidden = visibles.length > 0;
     $("lista").replaceChildren(...visibles.map((o) => tarjeta(o, todas.indexOf(o) + 1)));
   }
@@ -271,8 +276,8 @@
     pintar();
   }
 
-  function restablecer() {
-    filtros = { ...L.FILTROS_DEFECTO };
+  function restablecer(base = L.FILTROS_DEFECTO) {
+    filtros = { ...base };
     armarFiltros();
     aplicar();
   }
@@ -289,8 +294,9 @@
     $("f-marca").addEventListener("change", (e) => { filtros.marca = e.target.value || null; aplicar(); });
     $("f-ocultar-descartadas").addEventListener("change", (e) => { filtros.ocultarDescartadas = e.target.checked; aplicar(); });
     $("f-ocultar-tracker").addEventListener("change", (e) => { filtros.ocultarTracker = e.target.checked; aplicar(); });
-    $("restablecer").addEventListener("click", restablecer);
-    $("vacio-restablecer").addEventListener("click", restablecer);
+    $("restablecer").addEventListener("click", () => restablecer());
+    $("vacio-restablecer").addEventListener("click", () => restablecer());
+    $("mostrar-todas").addEventListener("click", () => restablecer(L.FILTROS_TODAS));
     $("bloquear").addEventListener("click", () => { borrar("ofertas.clave"); datos = null; pedir(""); });
     $("ver-filtros").addEventListener("click", (e) => {
       const abierto = $("filtros").classList.toggle("abierto");

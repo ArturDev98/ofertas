@@ -20,30 +20,53 @@
     return Math.round((utc(hasta) - utc(desde)) / 86400000);
   }
 
-  function filtrar(ofertas, filtros, marcas, hoy) {
+  const FILTROS_TODAS = Object.freeze({
+    ...FILTROS_DEFECTO, minimo: 0, ubicacion: ["PASS", "FLAG", "FAIL"], idioma: ["PASS", "FLAG", "FAIL"],
+    ocultarDescartadas: false,
+  });
+  const NOMBRE_ESTADO = { PASS: "cumple", FLAG: "a revisar", FAIL: "veto" };
+
+  // Primera razón por la que la oferta queda fuera, o null si se ve; los vetos van antes.
+  function motivo(o, f, marca, hoy, texto) {
+    if (o.language_gate && !f.idioma.includes(o.language_gate)) {
+      return o.language_gate === "FAIL" ? "veto de idioma" : `idioma ${NOMBRE_ESTADO[o.language_gate] || o.language_gate}`;
+    }
+    if (o.location_verdict && !f.ubicacion.includes(o.location_verdict)) {
+      return o.location_verdict === "FAIL" ? "veto de ubicación"
+        : `ubicación ${NOMBRE_ESTADO[o.location_verdict] || o.location_verdict}`;
+    }
+    if ((o.rank_score || 0) < f.minimo) return `puntaje bajo ${f.minimo}`;
+    if (f.veredictos.length && !f.veredictos.includes(o.rank_verdict)) return "veredicto";
+    if (f.portales.length && !f.portales.includes(o.portal)) return "portal";
+    if (f.cierraEn != null) {
+      if (!o.deadline) return "sin fecha de cierre";
+      const d = dias(hoy, o.deadline);
+      if (d < 0 || d > f.cierraEn) return "fecha de cierre";
+    }
+    if (f.ocultarDescartadas && marca === "descartada") return "descartada";
+    if (f.ocultarTracker && o.tracker) return "en el tracker";
+    if (f.marca && marca !== f.marca) return "marca";
+    if (texto) {
+      const campos = [o.title, o.company, o.location, ...(o.strengths || []), ...(o.gaps || [])];
+      if (!campos.some((c) => normal(c).includes(texto))) return "búsqueda";
+    }
+    return null;
+  }
+
+  function evaluar(ofertas, filtros, marcas, hoy) {
     const f = { ...FILTROS_DEFECTO, ...filtros };
     const texto = normal(f.texto).trim();
-    return ofertas.filter((o) => {
-      const marca = marcas[o.key];
-      if (f.veredictos.length && !f.veredictos.includes(o.rank_verdict)) return false;
-      if ((o.rank_score || 0) < f.minimo) return false;
-      if (f.portales.length && !f.portales.includes(o.portal)) return false;
-      if (o.location_verdict && !f.ubicacion.includes(o.location_verdict)) return false;
-      if (o.language_gate && !f.idioma.includes(o.language_gate)) return false;
-      if (f.cierraEn != null) {
-        if (!o.deadline) return false;
-        const d = dias(hoy, o.deadline);
-        if (d < 0 || d > f.cierraEn) return false;
-      }
-      if (f.ocultarDescartadas && marca === "descartada") return false;
-      if (f.ocultarTracker && o.tracker) return false;
-      if (f.marca && marca !== f.marca) return false;
-      if (texto) {
-        const campos = [o.title, o.company, o.location, ...(o.strengths || []), ...(o.gaps || [])];
-        if (!campos.some((c) => normal(c).includes(texto))) return false;
-      }
-      return true;
-    });
+    return ofertas.map((o) => [o, motivo(o, f, marcas[o.key], hoy, texto)]);
+  }
+
+  const filtrar = (ofertas, filtros, marcas, hoy) =>
+    evaluar(ofertas, filtros, marcas, hoy).filter(([, m]) => !m).map(([o]) => o);
+
+  // [[razón, cuántas]] de las que no se ven, de más a menos.
+  function ocultas(ofertas, filtros, marcas, hoy) {
+    const cuenta = new Map();
+    evaluar(ofertas, filtros, marcas, hoy).forEach(([, m]) => { if (m) cuenta.set(m, (cuenta.get(m) || 0) + 1); });
+    return [...cuenta].sort((a, b) => b[1] - a[1]);
   }
 
   function alertas(o, hoy) {
@@ -82,5 +105,5 @@
 
   const color = (veredicto) => COLORES[veredicto] || GRIS;
 
-  return { FILTROS_DEFECTO, filtrar, alertas, esNueva, marcaLocal, clavePendiente, color, dias };
+  return { FILTROS_DEFECTO, FILTROS_TODAS, filtrar, ocultas, alertas, esNueva, marcaLocal, clavePendiente, color, dias };
 });

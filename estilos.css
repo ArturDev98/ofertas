@@ -199,6 +199,11 @@ input[type=checkbox], input[type=range] { accent-color: var(--acento); }
   display: grid; justify-items: center; gap: 10px; padding: 56px 16px; color: var(--suave); text-align: center;
 }
 .vacio .icono { font-size: 28px; color: var(--tenue); }
+.ocultas {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px;
+  margin: 0 0 16px; color: var(--suave); font-size: 14px;
+}
+.ocultas p { margin: 0; }
 .generado { color: var(--tenue); text-align: center; font-size: 13px; margin: 24px 0 8px; }
 
 .tarjeta {
