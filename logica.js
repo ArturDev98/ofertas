@@ -3,8 +3,7 @@
   if (typeof module === "object" && module.exports) module.exports = fabrica();
   else raiz.Logica = fabrica();
 })(typeof self !== "undefined" ? self : this, function () {
-  const COLORES = { "Strong Fit": "#188038", "Good Fit": "#1a73e8", "Moderate Fit": "#e37400" };
-  const GRIS = "#5f6368";
+  const TONOS = [["strong", "Strong Fit"], ["good", "Good Fit"], ["moderate", "Moderate Fit"]];
 
   const FILTROS_DEFECTO = Object.freeze({
     veredictos: [], minimo: 45, portales: [], ubicacion: ["PASS", "FLAG"], idioma: ["PASS", "FLAG"],
@@ -103,7 +102,34 @@
   const clavePendiente = (guardada, archivo) =>
     guardada && guardada.raw && guardada.sal === archivo.sal ? "usar" : "pedir";
 
-  const color = (veredicto) => COLORES[veredicto] || GRIS;
+  const tono = (veredicto) => (TONOS.find(([, v]) => v === veredicto) || ["otro"])[0];
 
-  return { FILTROS_DEFECTO, FILTROS_TODAS, filtrar, ocultas, alertas, esNueva, marcaLocal, clavePendiente, color, dias };
+  // Perforaciones llenas de la malla de 10: una por cada 10 puntos.
+  const granos = (puntaje) => Math.min(10, Math.max(0, Math.round((Number(puntaje) || 0) / 10)));
+
+  function vecino(claves, actual, paso) {
+    if (!claves.length) return null;
+    const i = claves.indexOf(actual);
+    if (i < 0) return claves[0];
+    return claves[Math.min(claves.length - 1, Math.max(0, i + paso))];
+  }
+
+  // [[tono, etiqueta, cuántas]] en orden Strong, Good, Moderate, otros; sin los que no tienen ofertas.
+  function reparto(ofertas) {
+    const filas = [...TONOS, ["otro", "Otros"]].map(([t, v]) => [t, v, 0]);
+    ofertas.forEach((o) => { filas.find(([t]) => t === tono(o.rank_verdict))[2] += 1; });
+    return filas.filter(([, , n]) => n > 0);
+  }
+
+  function cifras(ofertas, hoy, visitaAnterior) {
+    const cierran = ofertas.filter((o) => {
+      if (!o.deadline) return false;
+      const d = dias(hoy, o.deadline);
+      return d >= 0 && d <= 7;
+    }).length;
+    return { cierran, nuevas: ofertas.filter((o) => esNueva(o, visitaAnterior)).length };
+  }
+
+  return { FILTROS_DEFECTO, FILTROS_TODAS, filtrar, ocultas, alertas, esNueva, marcaLocal, clavePendiente, tono,
+    granos, vecino, reparto, cifras, dias };
 });

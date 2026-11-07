@@ -2,98 +2,109 @@
 <html lang="es">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="robots" content="noindex, nofollow">
   <meta name="color-scheme" content="light dark">
-  <title>Ofertas</title>
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; font-src 'self'; img-src 'self' data:; connect-src 'self'; base-uri 'none'; form-action 'none'">
+  <meta name="theme-color" content="#1f3a2b">
+  <title>Criba</title>
+  <link rel="preload" href="vendor/fuentes/bricolage.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="vendor/fuentes/schibsted.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="estilos.css">
+  <script src="tema.js"></script>
 </head>
 <body>
   <section id="desbloqueo" class="desbloqueo" hidden>
-    <form id="form-clave" class="caja-clave">
-      <h1 class="titulo-clave"><svg class="icono" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>Ofertas</h1>
-      <p class="ayuda">Los datos están cifrados. Escribe tu clave para verlos.</p>
+    <canvas id="fondo" class="fondo" aria-hidden="true"></canvas>
+    <form id="form-clave" class="caja-clave" novalidate>
+      <div class="marca-grande">
+        <svg class="sello-criba" viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="17"/><g class="huecos"><circle cx="14" cy="14" r="2"/><circle cx="20" cy="12" r="2"/><circle cx="26" cy="14" r="2"/><circle cx="12" cy="20" r="2"/><circle cx="20" cy="20" r="2"/><circle cx="28" cy="20" r="2"/><circle cx="14" cy="26" r="2"/><circle cx="20" cy="28" r="2"/><circle cx="26" cy="26" r="2"/></g></svg>
+        <h1>Criba</h1>
+      </div>
+      <p class="ayuda">Las ofertas viajan cifradas. Escriba su clave para abrirlas en este navegador.</p>
       <label for="frase">Clave</label>
-      <input id="frase" type="password" autocomplete="current-password" required>
-      <label class="casilla"><input id="recordar" type="checkbox" checked> Recordar en este navegador</label>
-      <button type="submit" id="abrir">Abrir</button>
+      <input id="frase" type="password" autocomplete="current-password" required aria-describedby="error">
+      <label class="casilla"><input id="recordar" type="checkbox" checked aria-describedby="recordar-nota"> No pedir la clave la próxima vez en este navegador</label>
+      <p id="recordar-nota" class="nota-clave">Si bloquea la página, la clave guardada se borra.</p>
+      <button type="submit" id="abrir" class="boton-oro"><i data-icono="LockOpen"></i>Abrir</button>
       <p id="error" class="error" role="alert"></p>
     </form>
   </section>
 
-  <div id="app" hidden>
+  <div id="app" class="app" hidden>
     <header class="barra">
-      <div class="marca-titulo">
-        <h1>Ofertas</h1>
-        <span id="contador" class="contador"></span>
-        <div id="resumen" class="resumen" aria-label="Ofertas visibles por veredicto"></div>
+      <div class="marca">
+        <svg class="sello-criba" viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="17"/><g class="huecos"><circle cx="14" cy="14" r="2"/><circle cx="20" cy="12" r="2"/><circle cx="26" cy="14" r="2"/><circle cx="12" cy="20" r="2"/><circle cx="20" cy="20" r="2"/><circle cx="28" cy="20" r="2"/><circle cx="14" cy="26" r="2"/><circle cx="20" cy="28" r="2"/><circle cx="26" cy="26" r="2"/></g></svg>
+        <span>Criba</span>
       </div>
+      <div class="reparto" aria-label="Ofertas visibles por veredicto">
+        <div id="reparto-barra" class="reparto-barra"></div>
+        <div id="reparto-leyenda" class="reparto-leyenda"></div>
+      </div>
+      <dl class="cifras">
+        <div><dt>visibles</dt><dd><span id="c-visibles">0</span><small id="c-total"></small></dd></div>
+        <div><dt>cierran esta semana</dt><dd id="c-cierran">0</dd></div>
+        <div><dt>nuevas</dt><dd id="c-nuevas">0</dd></div>
+      </dl>
       <div class="acciones">
-        <button type="button" id="ver-filtros" class="boton solo-movil" aria-expanded="false" aria-controls="filtros">
-          <svg class="icono" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M7 12h10M10 18h4"/></svg>Filtros
-        </button>
-        <button type="button" id="restablecer" class="boton">
-          <svg class="icono" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 5v6h-6"/></svg><span class="texto-largo">Restablecer</span>
-        </button>
-        <button type="button" id="bloquear" class="boton">
-          <svg class="icono" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg><span class="texto-largo">Bloquear</span>
-        </button>
+        <button type="button" id="ver-filtros" class="boton-marco solo-angosto" aria-expanded="false" aria-controls="filtros"><i data-icono="SlidersHorizontal"></i><span>Filtros</span></button>
+        <button type="button" id="tema" class="boton-marco boton-tema" aria-label="Cambiar tema"><i data-icono="Moon"></i></button>
+        <button type="button" id="restablecer" class="boton-marco" aria-label="Restablecer filtros" data-tip="Volver a los filtros por defecto"><i data-icono="RotateCcw"></i><span class="texto-largo">Restablecer</span></button>
+        <button type="button" id="bloquear" class="boton-marco" aria-label="Bloquear y olvidar la clave" data-tip="Cierra las ofertas y borra la clave guardada en este navegador"><i data-icono="Lock"></i><span class="texto-largo">Bloquear y olvidar</span></button>
       </div>
     </header>
 
     <div class="cuerpo">
       <aside id="filtros" class="filtros" aria-label="Filtros">
-        <label class="campo"><span>Buscar</span>
-          <span class="buscador">
-            <svg class="icono" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
-            <input id="f-texto" type="search" placeholder="cargo, empresa, stack…">
-          </span>
+        <div class="filtros-cabeza solo-angosto">
+          <h2>Filtros</h2>
+          <button type="button" id="cerrar-filtros" class="boton-icono" aria-label="Cerrar filtros"><i data-icono="X"></i></button>
+        </div>
+        <label class="campo"><span class="rotulo">Buscar</span>
+          <span class="buscador"><i data-icono="Search"></i><input id="f-texto" type="search" placeholder="Cargo, empresa o stack"></span>
         </label>
         <label class="campo">
-          <span class="fila"><span>Puntaje mínimo</span><output id="f-minimo-valor"></output></span>
-          <input id="f-minimo" type="range" min="0" max="100" step="5">
+          <span class="rotulo fila-rotulo"><span>Puntaje mínimo</span><output id="f-minimo-valor" class="dato"></output></span>
+          <input id="f-minimo" class="malla-rango" type="range" min="0" max="100" step="5">
         </label>
-        <fieldset><legend>Veredicto</legend><div id="f-veredictos" class="opciones"></div></fieldset>
-        <fieldset><legend>Portal</legend><div id="f-portales" class="opciones"></div></fieldset>
-        <fieldset><legend>Ubicación</legend><div id="f-ubicacion" class="opciones"></div></fieldset>
-        <fieldset><legend>Idioma</legend><div id="f-idioma" class="opciones"></div></fieldset>
-        <label class="campo"><span>Cierra en</span>
-          <select id="f-cierra">
-            <option value="">cualquier fecha</option>
-            <option value="3">3 días o menos</option>
-            <option value="7">7 días o menos</option>
-            <option value="14">14 días o menos</option>
-            <option value="30">30 días o menos</option>
-          </select>
-        </label>
-        <label class="campo"><span>Marca</span>
-          <select id="f-marca">
-            <option value="">todas</option>
-            <option value="interesa">Me interesa</option>
-            <option value="aplique">Apliqué</option>
-            <option value="descartada">Descartadas</option>
-          </select>
-        </label>
+        <fieldset><legend class="rotulo">Veredicto</legend><div id="f-veredictos" class="opciones"></div></fieldset>
+        <fieldset><legend class="rotulo">Portal</legend><div id="f-portales" class="opciones"></div></fieldset>
+        <fieldset><legend class="rotulo">Ubicación</legend><div id="f-ubicacion" class="opciones"></div></fieldset>
+        <fieldset><legend class="rotulo">Idioma</legend><div id="f-idioma" class="opciones"></div></fieldset>
+        <fieldset><legend class="rotulo">Cierra en</legend><div id="f-cierra" class="opciones"></div></fieldset>
+        <fieldset><legend class="rotulo">Marca</legend><div id="f-marca" class="opciones"></div></fieldset>
         <label class="casilla"><input id="f-ocultar-descartadas" type="checkbox"> Ocultar descartadas</label>
-        <label class="casilla"><input id="f-ocultar-tracker" type="checkbox"> Ocultar las del tracker</label>
+        <label class="casilla"><input id="f-ocultar-tracker" type="checkbox"> Ocultar las que ya están en el tracker</label>
+        <p id="generado" class="generado"></p>
       </aside>
 
-      <main>
-        <div id="ocultas" class="ocultas" hidden>
-          <p id="ocultas-texto"></p>
-          <button type="button" id="mostrar-todas" class="boton">Mostrar todas</button>
+      <main class="columna-lista">
+        <div class="lista-cabeza">
+          <h2>Ordenadas por puntaje</h2>
+          <p class="atajos"><kbd>↑</kbd><kbd>↓</kbd> mover <kbd>S</kbd> me interesa <kbd>X</kbd> descartar <kbd>A</kbd> apliqué</p>
         </div>
-        <div id="lista" class="lista"></div>
+        <ol id="lista" class="lista" role="listbox" tabindex="0" aria-label="Ofertas ordenadas por puntaje"></ol>
         <div id="vacio" class="vacio" hidden>
-          <svg class="icono" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
-          <p>Ninguna oferta con estos filtros.</p>
+          <svg class="sello-criba vacio-sello" viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="17"/><g class="huecos"><circle cx="14" cy="14" r="2"/><circle cx="20" cy="12" r="2"/><circle cx="26" cy="14" r="2"/><circle cx="12" cy="20" r="2"/><circle cx="20" cy="20" r="2"/><circle cx="28" cy="20" r="2"/><circle cx="14" cy="26" r="2"/><circle cx="20" cy="28" r="2"/><circle cx="26" cy="26" r="2"/></g></svg>
+          <p class="vacio-titulo">Ninguna oferta pasó por esta malla.</p>
+          <p>Baje el puntaje mínimo o quite algún filtro.</p>
           <button type="button" id="vacio-restablecer" class="boton">Restablecer filtros</button>
         </div>
-        <p id="generado" class="generado"></p>
+        <div id="umbral" class="umbral" hidden></div>
+        <div id="bandeja" class="bandeja" hidden>
+          <p><strong id="bandeja-total"></strong> <span id="bandeja-motivos"></span></p>
+          <button type="button" id="mostrar-todas" class="boton"><i data-icono="Eye"></i><span>Mostrar todas</span></button>
+        </div>
       </main>
-    </div>
-  </div>
 
+      <section id="detalle" class="detalle" aria-label="Detalle de la oferta" aria-live="polite"></section>
+    </div>
+    <div id="velo" class="velo" hidden></div>
+  </div>
+  <div id="tip" class="tip" role="tooltip" hidden></div>
+
+  <script src="vendor/lucide.min.js"></script>
+  <script src="vendor/gsap.min.js"></script>
   <script src="cripto.js"></script>
   <script src="logica.js"></script>
   <script src="app.js"></script>

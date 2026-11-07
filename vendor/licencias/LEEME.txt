@@ -1,0 +1,6 @@
+Copias fijadas, sin CDN: la pagina descifra datos y no carga codigo de terceros.
+gsap 3.12.5 (cdnjs) - licencia estandar de GreenSock, https://gsap.com/standard-license
+lucide 0.460.0 UMD (unpkg) - ISC
+three.js r169 three.module.min.js (jsdelivr) - MIT
+Schibsted Grotesk (fontsource-variable 5.1.0, latin, wght) - SIL OFL 1.1
+Bricolage Grotesque (fontsource-variable 5.1.0, latin, wght) - SIL OFL 1.1
