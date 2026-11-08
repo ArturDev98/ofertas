@@ -130,6 +130,26 @@
     return { cierran, nuevas: ofertas.filter((o) => esNueva(o, visitaAnterior)).length };
   }
 
+  // Solo letras, dígitos, _ y -: el token arma una ruta y no debe poder salir de datos/.
+  function token(hash) {
+    const t = String(hash || "").replace(/^#/, "");
+    return /^[A-Za-z0-9_-]{20,64}$/.test(t) ? t : null;
+  }
+
+  // Un hash que no es token (cortado al copiarlo) no debe abrir la página de Arturo.
+  function hashMalo(hash) {
+    return String(hash || "").replace(/^#/, "") !== "" && token(hash) === null;
+  }
+
+  function rutaDatos(tok) {
+    return tok ? `datos/${tok}.json` : "datos.json";
+  }
+
+  function claves(tok) {
+    const pre = tok ? `criba.${tok}.` : "ofertas.";
+    return { clave: `${pre}clave`, marcas: `${pre}marcas`, filtros: `${pre}filtros`, visita: `${pre}visita` };
+  }
+
   return { FILTROS_DEFECTO, FILTROS_TODAS, filtrar, ocultas, alertas, esNueva, marcaLocal, clavePendiente, tono,
-    granos, vecino, reparto, cifras, dias };
+    granos, vecino, reparto, cifras, dias, token, hashMalo, rutaDatos, claves };
 });

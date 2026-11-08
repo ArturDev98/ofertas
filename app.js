@@ -19,11 +19,15 @@
   const leer = (k) => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
   const guardar = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* sin almacenamiento */ } };
   const borrar = (k) => { try { localStorage.removeItem(k); } catch (e) { /* sin almacenamiento */ } };
+  // Cada enlace guarda clave, marcas y filtros aparte: dos personas pueden usar el mismo navegador.
+  const TOK = L.token(location.hash);
+  const K = L.claves(TOK);
+  const esTop = () => Boolean(datos && datos.modo === "top");
 
   let archivo = null;
   let datos = null;
-  let marcas = leer("ofertas.marcas") || {};
-  let filtros = { ...L.FILTROS_DEFECTO, ...(leer("ofertas.filtros") || {}) };
+  let marcas = leer(K.marcas) || {};
+  let filtros = { ...L.FILTROS_DEFECTO, ...(leer(K.filtros) || {}) };
   let visitaAnterior = null;
   let seleccion = null;
   let respaldo = [];
@@ -89,23 +93,25 @@
 
   async function inicio() {
     if (!subtle) return pedir("Este navegador no puede descifrar las ofertas. Abra la página con HTTPS.");
+    if (L.hashMalo(location.hash)) return pedir("Este enlace no es válido. Pídale el suyo a quien lo invitó.");
     pedir("Cargando ofertas…", true);
     try {
-      const r = await fetch("datos.json", { cache: "no-store" });
+      const r = await fetch(L.rutaDatos(TOK), { cache: "no-store" });
+      if (TOK && r.status === 404) return pedir("Este enlace no es válido. Pídale el suyo a quien lo invitó.");
       if (!r.ok) throw new Error(`HTTP ${r.status}`);
       archivo = await r.json();
     } catch (e) {
       return pedir(`No se pudieron cargar las ofertas (${e.message}). Recargue la página en unos minutos.`);
     }
-    const guardada = leer("ofertas.clave");
+    const guardada = leer(K.clave);
     if (L.clavePendiente(guardada, archivo) === "usar") {
       try {
         return mostrar(await C.abrir(archivo, await C.importar(guardada.raw, subtle), subtle), false);
       } catch (e) {
-        borrar("ofertas.clave");
+        borrar(K.clave);
       }
     } else if (guardada) {
-      borrar("ofertas.clave");
+      borrar(K.clave);
     }
     pedir("");
   }
@@ -145,7 +151,7 @@
     try {
       const clave = await C.derivar($("frase").value, archivo.sal, archivo.iter, subtle);
       const claro = await C.abrir(archivo, clave, subtle);
-      if ($("recordar").checked) guardar("ofertas.clave", { sal: archivo.sal, raw: await C.exportar(clave, subtle) });
+      if ($("recordar").checked) guardar(K.clave, { sal: archivo.sal, raw: await C.exportar(clave, subtle) });
       $("frase").value = "";
       $("error").textContent = "";
       await mostrar(claro, true);
@@ -158,8 +164,8 @@
 
   async function mostrar(claro, conEntrada) {
     datos = claro;
-    visitaAnterior = leer("ofertas.visita");
-    guardar("ofertas.visita", L.marcaLocal(new Date()));
+    visitaAnterior = leer(K.visita);
+    guardar(K.visita, L.marcaLocal(new Date()));
     if (conEntrada && G && !quieto) {
       const caida = fondo ? fondo.soltar() : Promise.resolve();
       G.to(".caja-clave", { y: 24, opacity: 0, scale: 0.97, duration: 0.45, ease: "power3.in" });
@@ -169,6 +175,10 @@
     $("desbloqueo").hidden = true;
     G && G.set(".caja-clave", { clearProps: "all" });
     $("app").hidden = false;
+    // Un top ya viene recortado: sin malla ni bandeja, y con todos los filtros abiertos.
+    if (esTop()) filtros = { ...L.FILTROS_TODAS };
+    $("titulo-lista").textContent = esTop() ? "Su top 10" : "Ordenadas por puntaje";
+    $("campo-minimo").hidden = esTop();
     const generado = String(datos.generado || "");
     $("generado").textContent = generado ? `Actualizado el ${fecha(generado) || generado.slice(0, 10)} a las ${generado.slice(11, 16)}` : "";
     primeraVez = true;
@@ -217,8 +227,10 @@
     const claseEstado = (v) => String(v).toLowerCase();
     chips($("f-veredictos"), veredictos, filtros.veredictos, (v) => v.replace(" Fit", ""), cambiar("veredictos"), L.tono);
     chips($("f-portales"), portales, filtros.portales, portal, cambiar("portales"), (v) => `sin-grano portal portal-${portal(v)}`);
-    chips($("f-ubicacion"), ESTADOS.map(([k]) => k), filtros.ubicacion, estado, cambiar("ubicacion"), claseEstado);
-    chips($("f-idioma"), ESTADOS.map(([k]) => k), filtros.idioma, estado, cambiar("idioma"), claseEstado);
+    // Un top ya viene sin vetadas, y el tracker es solo de Arturo: ninguno de los dos aplica ahí.
+    const estados = ESTADOS.map(([k]) => k).filter((k) => !esTop() || k !== "FAIL");
+    chips($("f-ubicacion"), estados, filtros.ubicacion, estado, cambiar("ubicacion"), claseEstado);
+    chips($("f-idioma"), estados, filtros.idioma, estado, cambiar("idioma"), claseEstado);
     $("f-texto").value = filtros.texto;
     ponerMinimo(filtros.minimo);
     chipsUnico($("f-cierra"), [[null, "Cualquier fecha"], [3, "3 días"], [7, "7 días"], [14, "14 días"], [30, "30 días"]],
@@ -227,6 +239,7 @@
       ["descartada", "Descartadas", "m-descartada"]], filtros.marca || null, (v) => { filtros.marca = v; aplicar(); });
     $("f-ocultar-descartadas").checked = filtros.ocultarDescartadas;
     $("f-ocultar-tracker").checked = filtros.ocultarTracker;
+    $("f-ocultar-tracker").closest("label").hidden = esTop();
   }
 
   function ponerMinimo(valor) {
@@ -237,7 +250,7 @@
 
   function aplicar() {
     previos = null;
-    guardar("ofertas.filtros", filtros);
+    guardar(K.filtros, filtros);
     pintar();
   }
 
@@ -268,7 +281,7 @@
     const fuera = L.ocultas(todas, filtros, marcas, hoy());
     const nFuera = fuera.reduce((s, [, n]) => s + n, 0);
     pintarBandeja(todas, fuera, nFuera);
-    $("umbral").hidden = !visibles.length || !filtros.minimo;
+    $("umbral").hidden = esTop() || !visibles.length || !filtros.minimo;
     $("umbral").textContent = `Malla en ${filtros.minimo} · lo de abajo cae a la bandeja`;
     $("vacio").hidden = visibles.length > 0;
     $("lista").hidden = visibles.length === 0;
@@ -291,7 +304,7 @@
     const base = previos || L.FILTROS_DEFECTO;
     const nBase = nFuera ? 0 : L.ocultas(todas, base, marcas, hoy()).reduce((s, [, n]) => s + n, 0);
     const abierta = nFuera === 0 && nBase > 0;
-    $("bandeja").hidden = nFuera === 0 && !abierta;
+    $("bandeja").hidden = esTop() || (nFuera === 0 && !abierta);
     $("bandeja").classList.toggle("abierta", abierta);
     const boton = $("mostrar-todas");
     boton.dataset.modo = abierta ? "ocultar" : "mostrar";
@@ -381,7 +394,7 @@
       hecho("Portal", portal(o.portal) || "Sin dato", null, "Globe"),
       hecho("Ubicación", estado(o.location_verdict), claseEstado(o.location_verdict), icoEstado[o.location_verdict] || "MapPin"),
       hecho("Idioma", estado(o.language_gate), claseEstado(o.language_gate), icoEstado[o.language_gate] || "Languages"),
-      hecho("Tracker", o.tracker ? TRACKER[o.tracker] || o.tracker : "No está", null, "Inbox"));
+      esTop() ? null : hecho("Tracker", o.tracker ? TRACKER[o.tracker] || o.tracker : "No está", null, "Inbox"));
   }
 
   function avisos(o) {
@@ -503,7 +516,7 @@
   function marcar(clave, valor) {
     if (marcas[clave] === valor) delete marcas[clave];
     else marcas[clave] = valor;
-    guardar("ofertas.marcas", marcas);
+    guardar(K.marcas, marcas);
     const antes = seleccion;
     // Si la marca saca la oferta de la lista, la selección pasa a la vecina y no salta al inicio.
     const claves = visibles.map((o) => o.key);
@@ -642,8 +655,8 @@
     });
     $("frase").addEventListener("input", () => $("frase").removeAttribute("aria-invalid"));
     $("bloquear").addEventListener("click", () => {
-      const habiaClave = leer("ofertas.clave") != null;
-      borrar("ofertas.clave");
+      const habiaClave = leer(K.clave) != null;
+      borrar(K.clave);
       datos = null;
       seleccion = null;
       Object.keys(contadores).forEach((k) => delete contadores[k]);
@@ -669,5 +682,7 @@
   }
 
   conectar();
+  // Otro token en la misma pestaña es otra persona: se recarga para no mezclar su estado.
+  window.addEventListener("hashchange", () => location.reload());
   inicio();
 })();

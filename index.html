@@ -28,6 +28,7 @@
       <p id="recordar-nota" class="nota-clave">Si bloquea la página, la clave guardada se borra.</p>
       <button type="submit" id="abrir" class="boton-oro"><i data-icono="LockOpen"></i>Abrir</button>
       <p id="error" class="error" role="alert"></p>
+      <p class="enlace-legal"><a href="privacidad.html">Política de privacidad</a></p>
     </form>
   </section>
 
@@ -63,7 +64,7 @@
         <label class="campo"><span class="rotulo">Buscar</span>
           <span class="buscador"><i data-icono="Search"></i><input id="f-texto" type="search" placeholder="Cargo, empresa o stack"></span>
         </label>
-        <label class="campo">
+        <label id="campo-minimo" class="campo">
           <span class="rotulo fila-rotulo"><span>Puntaje mínimo</span><output id="f-minimo-valor" class="dato"></output></span>
           <input id="f-minimo" class="malla-rango" type="range" min="0" max="100" step="5">
         </label>
@@ -80,7 +81,7 @@
 
       <main class="columna-lista">
         <div class="lista-cabeza">
-          <h2>Ordenadas por puntaje</h2>
+          <h2 id="titulo-lista">Ordenadas por puntaje</h2>
           <p class="atajos"><kbd>↑</kbd><kbd>↓</kbd> mover <kbd>S</kbd> me interesa <kbd>X</kbd> descartar <kbd>A</kbd> apliqué</p>
         </div>
         <ol id="lista" class="lista" role="listbox" tabindex="0" aria-label="Ofertas ordenadas por puntaje"></ol>
